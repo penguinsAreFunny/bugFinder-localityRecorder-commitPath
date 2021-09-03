@@ -1,4 +1,3 @@
-npm i -D bugfinder-localityrecorder-commit
 ```
 // @see bugFinder-localityRecorder-commit
 const projectRoot = "../projectroot/"
