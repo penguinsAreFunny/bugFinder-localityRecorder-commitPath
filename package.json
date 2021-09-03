@@ -1,0 +1,50 @@
+{
+  "name": "bugfinder-localityrecorder-commitpath",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run clean && tsc --project .",
+    "clean": "rimraf ./dist",
+    "prepare": "npm run build",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags",
+    "pack": "npm pack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/penguinsAreFunny/bugFinder-framework"
+  },
+  "homepage": "https://github.com/penguinsAreFunny/bugFinder-framework#readme",
+  "bugs": {
+    "url": "https://github.com/penguinsAreFunny/bugFinder-framework/issues"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "author": "Robert Klinger",
+  "keyword": "bugfinder",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.26.1",
+    "@typescript-eslint/eslint-plugin-tslint": "^4.26.1",
+    "@typescript-eslint/parser": "^4.26.1",
+    "bugfinder-framework": "file:../bugFinder-framework",
+    "bugfinder-localityrecorder-commit": "file:../bugFinder-localityRecorder-commit",
+    "inversify": "^5.1.1",
+    "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
+    "source-map-support": "^0.5.19",
+    "typescript": "^4.3.2",
+    "@types/jest": "^26.0.23",
+    "ts-jest": "^26.5.6",
+    "chai": "^4.2.0"
+  },
+  "dependencies": {
+    "@types/node": "^15.12.2"
+  },
+  "peerDependencies": {
+    "bugfinder-localityrecorder-commit": "file:../bugFinder-localityRecorder-commit"
+  }
+}
