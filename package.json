@@ -42,9 +42,9 @@
     "inversify": "^5.1.1",
     "reflect-metadata": "^0.1.13",
     "bugfinder-framework": "^1.0.2",
-    "bugfinder-localityrecorder-commit": "^1.0.1"
+    "bugfinder-localityrecorder-commit": "^1.0.2"
   },
   "peerDependencies": {
-    "bugfinder-localityrecorder-commit": "^1.0.1"
+    "bugfinder-localityrecorder-commit": "^1.0.2"
   }
 }
