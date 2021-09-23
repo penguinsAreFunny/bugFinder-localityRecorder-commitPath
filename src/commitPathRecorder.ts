@@ -4,11 +4,10 @@ import {CommitPath, PathsHandling} from "./commitPath";
 import {Commit, GitFileType} from "bugfinder-localityrecorder-commit";
 import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "./TYPES";
 import {CommitToCommitPathMapper} from "./commitToCommitPath";
-import {BUGFINDER_COMMITPATH_QUANTIFIER_SONARQUBE_TYPES} from "../../bugFinder-commitPath-quantifier-sonarqube/src";
 
 @injectable()
 export class CommitPathRecorder implements LocalityRecorder<CommitPath> {
-    @optional() @inject(BUGFINDER_COMMITPATH_QUANTIFIER_SONARQUBE_TYPES.pathsHandling)
+    @optional() @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.pathsHandling)
     pathsHandling: PathsHandling;
 
     @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.commitRecorder)
