@@ -26,10 +26,15 @@ export interface PathsHandling {
 export declare class CommitPath implements Locality {
     /**
      * Map of Commit.key to Commit. Used to normalize CommitPaths and reduce redundancy
-     * @private
+     * It is not a common use case to change anything in this map!
      */
-    private static _commitMap;
-    private static _commits;
+    static _commitMap: Map<string, Commit>;
+    /**
+     * All Commits of all CommitPaths known.
+     * It is not a common use case to change this array. Usually only CommitPath is using this
+     * to normalize CommitPaths to Commits and the Paths of CommitPaths
+     */
+    static _commits: Commit[];
     /**
      * To achieve normalization und reduce redundancy commits
      * are stored static and received functional with getter method
