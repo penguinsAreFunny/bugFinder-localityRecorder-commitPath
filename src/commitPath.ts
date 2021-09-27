@@ -33,10 +33,16 @@ export class CommitPath implements Locality {
 
     /**
      * Map of Commit.key to Commit. Used to normalize CommitPaths and reduce redundancy
-     * @private
+     * It is not a common use case to change anything in this map!
      */
-    private static _commitMap = new Map<string, Commit>();
-    private static _commits: Commit[] = [];
+    public static _commitMap = new Map<string, Commit>();
+
+    /**
+     * All Commits of all CommitPaths known.
+     * It is not a common use case to change this array. Usually only CommitPath is using this
+     * to normalize CommitPaths to Commits and the Paths of CommitPaths
+     */
+    public static _commits: Commit[] = [];
 
     /**
      * To achieve normalization und reduce redundancy commits
