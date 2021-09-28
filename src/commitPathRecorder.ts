@@ -1,7 +1,7 @@
-import {inject, injectable, optional} from "inversify";
+import {inject, injectable} from "inversify";
 import {LocalityRecorder} from "bugfinder-framework";
-import {CommitPath, PathsHandling} from "./commitPath";
-import {Commit, GitFileType} from "bugfinder-localityrecorder-commit";
+import {CommitPath} from "./commitPath";
+import {Commit} from "bugfinder-localityrecorder-commit";
 import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "./TYPES";
 import {CommitToCommitPathMapper} from "./commitToCommitPath";
 
