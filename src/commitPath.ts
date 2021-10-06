@@ -1,6 +1,6 @@
 import * as crypto from "crypto";
 import {Locality} from "bugfinder-framework";
-import {Commit, GitFile} from "bugfinder-localityrecorder-commit";
+import {Commit, GitFile, GitFileType} from "bugfinder-localityrecorder-commit";
 
 export class CommitPath implements Locality {
 
@@ -16,6 +16,7 @@ export class CommitPath implements Locality {
      * to normalize CommitPaths to Commits and the Paths of CommitPaths
      */
     public static _commits: Commit[] = [];
+
 
     /**
      * To achieve normalization und reduce redundancy commits
@@ -45,6 +46,70 @@ export class CommitPath implements Locality {
     static get commitMap(): Map<string, Commit> {
         return CommitPath._commitMap;
     }
+
+    /**
+     * TODO: renaming of paths
+     * Returns up to n predecessor CommitPaths of locality
+     * @param locality
+     * @param n
+     * @param allLocalities
+     */
+    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[]): CommitPath[] {
+        if (allLocalities == null || allLocalities.length == 0) {
+            return []
+        }
+
+        // init: performance optimization
+        const orderedLocalities: Map<number, CommitPath[]> = new Map<number, CommitPath[]>()
+        let minOrder: number = allLocalities[0].commit.order
+
+        for (const aLoc of allLocalities) {
+            let cps = orderedLocalities.get(aLoc.commit.order)
+            cps = cps == null ? [aLoc] : [...cps, aLoc]
+            orderedLocalities.set(aLoc.commit.order, cps)
+
+            if (aLoc.commit.order < minOrder) minOrder = aLoc.commit.order
+        }
+
+        // calculating predecessor CommitPaths
+        let curOrder = locality.commit.order - 1
+        const predecessors: CommitPath[] = []
+
+        while (predecessors.length < n) {
+            const pred = CommitPath
+                .getNextPredecessor(locality.path.path, orderedLocalities, curOrder, minOrder, allLocalities)
+            if (pred == null) return predecessors
+            predecessors.push(pred)
+        }
+        return predecessors
+    }
+
+    /**
+     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched and no match was found
+     * @param path of the CommitPath of which the predecessor should be returned
+     * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
+     * @param beginOrder order of the CommitPath of which the predecessor should be returned
+     * @param minOrder min order of allLocalities
+     * @param allLocalities
+     */
+    static getNextPredecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number,
+                              minOrder: number, allLocalities: CommitPath[]): CommitPath {
+        const curOrder = beginOrder
+        const cps = orderedLocalities.get(curOrder)
+
+        while (curOrder >= minOrder) {
+
+            const cpsMatched = cps.filter(cp => {
+                return cp.path.path == path &&
+                    (cp.path.type == GitFileType.added || cp.path.type == GitFileType.modified)
+            })
+            if (cpsMatched.length > 0) {
+                return cpsMatched[0]
+            }
+        }
+        return null
+    }
+
 
     constructor(commit?: Commit, path?: GitFile) {
         if (commit == null) return;
