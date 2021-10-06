@@ -28,6 +28,23 @@ export declare class CommitPath implements Locality {
      * Returns a map of commit.key to commits. Used to normalize CommitPaths and reduce redundancy.
      */
     static get commitMap(): Map<string, Commit>;
+    /**
+     * TODO: renaming of paths
+     * Returns up to n predecessor CommitPaths of locality
+     * @param locality
+     * @param n
+     * @param allLocalities
+     */
+    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[]): CommitPath[];
+    /**
+     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched and no match was found
+     * @param path of the CommitPath of which the predecessor should be returned
+     * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
+     * @param beginOrder order of the CommitPath of which the predecessor should be returned
+     * @param minOrder min order of allLocalities
+     * @param allLocalities
+     */
+    static getNextPredecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number, minOrder: number, allLocalities: CommitPath[]): CommitPath;
     constructor(commit?: Commit, path?: GitFile);
     /**
      * Normalizes CommitPaths so that no duplicate Commits are stored.
