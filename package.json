@@ -1,6 +1,6 @@
 {
   "name": "bugfinder-localityrecorder-commitpath",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,7 +42,6 @@
     "@types/node": "^15.12.2",
     "bugfinder-framework": "^9.2.0",
     "bugfinder-localityrecorder-commit": "^2.2.0",
-    "bugfinder-localityrecorder-commitpath": "^1.10.0",
     "inversify": "^5.1.1",
     "reflect-metadata": "^0.1.13"
   }
