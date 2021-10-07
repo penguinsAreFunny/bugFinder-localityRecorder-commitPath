@@ -58,6 +58,38 @@ export class CommitPath implements Locality {
     }
 
     /**
+     * Performance optimizes wrapper call to CommitPath.getNPredecessors
+     * Returns up to n predecessors for each CommitPath of localities
+     * @param localities
+     * @param n
+     * @param allLocalities
+     */
+    static getNPredecessorsArray(localities: CommitPath[], n: number, allLocalities: CommitPath[]): Array<CommitPath[]> {
+        const preds: Array<CommitPath[]> = []
+        let locsWithExactlyNPreds = 0
+
+        for (let i = 0; i < localities.length; i++) {
+            const loc = localities[i]
+            if (i % 50 == 0)
+                console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
+
+            let pred = []
+            pred = i == 0 ? CommitPath.getNPredecessors(loc, n, allLocalities) :
+                CommitPath.getNPredecessors(loc, n, allLocalities, false)
+
+            if (pred.length == n)
+                locsWithExactlyNPreds++
+            if (pred.length > n)
+                console.log("FUUUUCK")
+
+            preds.push(pred)
+        }
+
+        console.log(`Found ${locsWithExactlyNPreds} localities with exactly ${n} predecessors.`)
+        return preds
+    }
+
+    /**
      * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
      * @param locality
