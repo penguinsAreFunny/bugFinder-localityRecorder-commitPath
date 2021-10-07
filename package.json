@@ -35,12 +35,13 @@
     "rimraf": "^3.0.2",
     "source-map-support": "^0.5.19",
     "ts-jest": "^26.5.6",
+    "ts-log": "^2.2.3",
     "typescript": "^4.3.2"
   },
   "dependencies": {
     "@types/node": "^15.12.2",
-    "bugfinder-framework": "^8.2.1",
-    "bugfinder-localityrecorder-commit": "^2.0.2",
+    "bugfinder-framework": "^9.2.0",
+    "bugfinder-localityrecorder-commit": "^2.2.0",
     "bugfinder-localityrecorder-commitpath": "^1.10.0",
     "inversify": "^5.1.1",
     "reflect-metadata": "^0.1.13"

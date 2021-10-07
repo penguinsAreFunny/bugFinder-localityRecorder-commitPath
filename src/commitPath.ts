@@ -1,8 +1,14 @@
 import * as crypto from "crypto";
 import {Locality} from "bugfinder-framework";
 import {Commit, GitFile, GitFileType} from "bugfinder-localityrecorder-commit";
+import {inject, optional} from "inversify";
+import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "./TYPES";
+import {Logger} from "ts-log";
 
 export class CommitPath implements Locality {
+
+    @optional() @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.logger)
+    static logger: Logger
 
     /**
      * Map of Commit.key to Commit. Used to normalize CommitPaths and reduce redundancy
@@ -17,6 +23,10 @@ export class CommitPath implements Locality {
      */
     public static _commits: Commit[] = [];
 
+    // used for getNPredecessors: Performance optimization
+    private static orderedLocalities: Map<number, CommitPath[]> = new Map<number, CommitPath[]>()
+    // used for getNPredecessors
+    private static minOrder: number
 
     /**
      * To achieve normalization und reduce redundancy commits
@@ -49,27 +59,41 @@ export class CommitPath implements Locality {
 
     /**
      * TODO: renaming of paths
-     * Returns up to n predecessor CommitPaths of locality
+     * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
      * @param locality
      * @param n
      * @param allLocalities
+     * @param initMode initializes map over allLocalities. If you want to call this function many times with same
+     *          allLocalities you can set this to false after first call! This will achieve huge performance advantages
      */
-    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[]): CommitPath[] {
+    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[], initMode: boolean = true): CommitPath[] {
         if (allLocalities == null || allLocalities.length == 0) {
             return []
         }
 
+        let orderedLocalities: Map<number, CommitPath[]>
+        let minOrder: number
         // init: performance optimization
-        const orderedLocalities: Map<number, CommitPath[]> = new Map<number, CommitPath[]>()
-        let minOrder: number = allLocalities[0].commit.order
+        if (initMode) {
+            // init map from order to CommitPath[] and set minOrder
+            orderedLocalities = new Map<number, CommitPath[]>()
+            minOrder = allLocalities[0].commit.order
 
-        for (const aLoc of allLocalities) {
-            let cps = orderedLocalities.get(aLoc.commit.order)
-            cps = cps == null ? [aLoc] : [...cps, aLoc]
-            orderedLocalities.set(aLoc.commit.order, cps)
+            for (const aLoc of allLocalities) {
+                let cps = orderedLocalities.get(aLoc.commit.order)
+                cps = cps == null ? [aLoc] : [...cps, aLoc]
+                orderedLocalities.set(aLoc.commit.order, cps)
 
-            if (aLoc.commit.order < minOrder) minOrder = aLoc.commit.order
+                if (aLoc.commit.order < minOrder) minOrder = aLoc.commit.order
+            }
+            CommitPath.orderedLocalities = orderedLocalities
+            CommitPath.minOrder = minOrder
+        } else {
+            // get Map and minOrder from last calculations with initMode = true
+            orderedLocalities = CommitPath.orderedLocalities
+            minOrder = CommitPath.minOrder
         }
+
 
         // calculating predecessor CommitPaths
         let curOrder = locality.commit.order - 1
@@ -77,9 +101,11 @@ export class CommitPath implements Locality {
 
         while (predecessors.length < n) {
             const pred = CommitPath
-                .getNextPredecessor(locality.path.path, orderedLocalities, curOrder, minOrder, allLocalities)
+                .getNextPredecessor(locality.path?.path, orderedLocalities, curOrder, minOrder, allLocalities)
             if (pred == null) return predecessors
+
             predecessors.push(pred)
+            curOrder = pred.commit.order - 1
         }
         return predecessors
     }
@@ -94,18 +120,27 @@ export class CommitPath implements Locality {
      */
     static getNextPredecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number,
                               minOrder: number, allLocalities: CommitPath[]): CommitPath {
-        const curOrder = beginOrder
-        const cps = orderedLocalities.get(curOrder)
+        let curOrder = beginOrder
 
         while (curOrder >= minOrder) {
 
+            const cps = orderedLocalities.get(curOrder)
+            if (cps == null) {
+                curOrder--
+                continue
+            }
+
             const cpsMatched = cps.filter(cp => {
-                return cp.path.path == path &&
-                    (cp.path.type == GitFileType.added || cp.path.type == GitFileType.modified)
+                return cp.path?.path == path &&
+                    (cp.path?.type == GitFileType.added || cp.path?.type == GitFileType.modified)
             })
             if (cpsMatched.length > 0) {
                 return cpsMatched[0]
+            } else if(cpsMatched.length > 1){
+                CommitPath.logger?.info("Found more than 1 matching CommitPath in one Commit. This seems to be an error."+
+                    "Most likely the CommitPath.getNextPredecessor function has a bug.")
             }
+            curOrder--
         }
         return null
     }
