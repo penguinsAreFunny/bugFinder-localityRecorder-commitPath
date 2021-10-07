@@ -1,14 +1,24 @@
 import * as crypto from "crypto";
-import {Locality} from "bugfinder-framework";
-import {Commit, GitFile, GitFileType} from "bugfinder-localityrecorder-commit";
+import {Locality, LocalityMap} from "bugfinder-framework";
+import {Commit, GitFile} from "bugfinder-localityrecorder-commit";
 import {inject, optional} from "inversify";
-import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "./TYPES";
+import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "../TYPES";
 import {Logger} from "ts-log";
+import {PredecessorDefault} from "./PredecessorDefault";
+import {PredecessorDelegation} from "./PredecessorDelegation";
 
 export class CommitPath implements Locality {
-
     @optional() @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.logger)
-    static logger: Logger
+    static _logger?: Logger
+
+    static set logger(logger: Logger) {
+        CommitPath._logger = logger
+        CommitPath.predecessorDelegation = new PredecessorDefault(logger)
+    }
+
+    static get logger(): Logger {
+        return CommitPath._logger
+    }
 
     /**
      * Map of Commit.key to Commit. Used to normalize CommitPaths and reduce redundancy
@@ -23,10 +33,76 @@ export class CommitPath implements Locality {
      */
     public static _commits: Commit[] = [];
 
-    // used for getNPredecessors: Performance optimization
-    private static orderedLocalities: Map<number, CommitPath[]> = new Map<number, CommitPath[]>()
-    // used for getNPredecessors
-    private static minOrder: number
+    /**
+     * Delegation to calculate predecessors with different strategies
+     * @private
+     */
+    private static predecessorDelegation: PredecessorDelegation = new PredecessorDefault()
+
+    /**
+     * Set the predecessorDelegation to change the method of calculating predecessors
+     * @param predecessorDelegation
+     */
+    static setPredecessorDelegation(predecessorDelegation: PredecessorDelegation) {
+        CommitPath.predecessorDelegation = predecessorDelegation
+    }
+
+    /**
+     * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
+     * Performance optimizes wrapper call to CommitPath.getNPredecessors
+     * Returns up to n predecessors for each CommitPath of localities
+     * Returned array is in same order as localities and has same length. return[i] has the predecessor CommitPaths
+     * of localities[i].
+     * return[i] is null if upToN is false (exactly n predecessors should be returned) and there were less than n
+     * predecessors in allLocalities
+     * @param localities
+     * @param n
+     * @param upToN
+     * @param allLocalities
+     */
+    static getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]):
+        LocalityMap<CommitPath, CommitPath[]> {
+
+        return CommitPath.predecessorDelegation.getNPredecessorsMap(localities, n, upToN, allLocalities)
+    }
+
+    /**
+     * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
+     * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
+     * Returns null on finding less than n predecessors if upToN is false
+     * Set initMode after first call to false to achieve performance optimization
+     * @param locality
+     * @param n
+     * @param upToN also return predecessors if less than n predecessors are found. False: return null if less than
+     *        n predecessors are found
+     * @param allLocalities
+     * @param initMode initializes map over allLocalities. If you want to call this function many times with same
+     *                 allLocalities you can set this to false after first call!
+     *                 This will achieve huge performance advantages.
+     */
+    static getNPredecessors(locality: CommitPath, n: number, upToN: boolean, allLocalities: CommitPath[], initMode: any)
+        : CommitPath[] {
+
+        return CommitPath.getNPredecessors(locality, n, upToN, allLocalities, initMode)
+    }
+
+    /**
+     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched
+     * and no match was found
+     * @param path of the CommitPath of which the predecessor should be returned
+     * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
+     * @param beginOrder order of the CommitPath of which the predecessor should be returned
+     * @param minOrder min order of allLocalities
+     * @param allLocalities
+     */
+    static getNextPredecessor(path: string,
+                              orderedLocalities: Map<number, CommitPath[]>,
+                              beginOrder: number,
+                              minOrder: number,
+                              allLocalities: CommitPath[]): CommitPath {
+
+        return CommitPath.getNextPredecessor(path, orderedLocalities, beginOrder, minOrder, allLocalities)
+    }
 
     /**
      * To achieve normalization und reduce redundancy commits
@@ -57,142 +133,39 @@ export class CommitPath implements Locality {
         return CommitPath._commitMap;
     }
 
-    /**
-     * Performance optimizes wrapper call to CommitPath.getNPredecessors
-     * Returns up to n predecessors for each CommitPath of localities
-     * @param localities
-     * @param n
-     * @param upToN
-     * @param allLocalities
-     */
-    static getNPredecessorsArray(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[])
-        : Array<CommitPath[]> {
 
-        const preds: Array<CommitPath[]> = []
-        let locsWithExactlyNPreds = 0
-
-        for (let i = 0; i < localities.length; i++) {
-            const loc = localities[i]
-            if (i % 50 == 0)
-                console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
-
-            let pred = []
-            pred = i == 0 ? CommitPath.getNPredecessors(loc, n, upToN, allLocalities) :
-                CommitPath.getNPredecessors(loc, n, upToN, allLocalities, false)
-
-            if (pred?.length == n)
-                locsWithExactlyNPreds++
-            if (pred?.length > n)
-                this.logger?.error(`Error during getNPredecessorsArray: got more than ${n} predecessors.`)
-
-            preds.push(pred)
+    public static removeFromMap(locality: CommitPath, map: Map<number, CommitPath[]>) {
+        const curOrder = locality.commit.order
+        const cps = map.get(curOrder)
+        const newCPs = []
+        for (const cp of cps) {
+            // dont push pred -> will be removed
+            if (cp.is(locality)) continue
+            newCPs.push(cp)
         }
 
-        this.logger?.info(`Found ${locsWithExactlyNPreds} localities with exactly ${n} predecessors.`)
-        return preds
-    }
-
-    /**
-     * TODO: renaming of paths
-     * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
-     * Returns null on finding less than n predecessors if upToN is false
-     * @param locality
-     * @param n
-     * @param upToN also return predecessors if less than n predecessors are found. False: return null if less than
-     *        n predecessors are found
-     * @param allLocalities
-     * @param initMode initializes map over allLocalities. If you want to call this function many times with same
-     *          allLocalities you can set this to false after first call! This will achieve huge performance advantages
-     */
-    static getNPredecessors(locality: CommitPath,
-                            n: number,
-                            upToN: boolean,
-                            allLocalities: CommitPath[],
-                            initMode: boolean = true)
-        : CommitPath[] {
-
-        if (allLocalities == null || allLocalities.length == 0) {
-            return []
-        }
-
-        let orderedLocalities: Map<number, CommitPath[]>
-        let minOrder: number
-        // init: performance optimization
-        if (initMode) {
-            // init map from order to CommitPath[] and set minOrder
-            orderedLocalities = new Map<number, CommitPath[]>()
-            minOrder = allLocalities[0].commit.order
-
-            for (const aLoc of allLocalities) {
-                let cps = orderedLocalities.get(aLoc.commit.order)
-                cps = cps == null ? [aLoc] : [...cps, aLoc]
-                orderedLocalities.set(aLoc.commit.order, cps)
-
-                if (aLoc.commit.order < minOrder) minOrder = aLoc.commit.order
-            }
-            CommitPath.orderedLocalities = orderedLocalities
-            CommitPath.minOrder = minOrder
+        if (newCPs.length == 0) {
+            map.set(curOrder, undefined)
         } else {
-            // get Map and minOrder from last calculations with initMode = true
-            orderedLocalities = CommitPath.orderedLocalities
-            minOrder = CommitPath.minOrder
+            map.set(curOrder, newCPs)
         }
-
-
-        // calculating predecessor CommitPaths
-        let curOrder = locality.commit.order - 1
-        const predecessors: CommitPath[] = []
-
-        while (predecessors.length < n) {
-            const pred = CommitPath
-                .getNextPredecessor(locality.path?.path, orderedLocalities, curOrder, minOrder, allLocalities)
-            if (pred == null) return predecessors
-
-            predecessors.push(pred)
-            curOrder = pred.commit.order - 1
-        }
-
-        if (!upToN && predecessors.length < n)
-            return null
-        return predecessors
     }
 
     /**
-     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched
-     * and no match was found
-     * @param path of the CommitPath of which the predecessor should be returned
-     * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
-     * @param beginOrder order of the CommitPath of which the predecessor should be returned
-     * @param minOrder min order of allLocalities
-     * @param allLocalities
+     * Removing locality from array
+     * @param locality
+     * @param array
+     * @private
      */
-    static getNextPredecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number,
-                              minOrder: number, allLocalities: CommitPath[]): CommitPath {
-        let curOrder = beginOrder
-
-        while (curOrder >= minOrder) {
-
-            const cps = orderedLocalities.get(curOrder)
-            if (cps == null) {
-                curOrder--
-                continue
-            }
-
-            const cpsMatched = cps.filter(cp => {
-                return cp.path?.path == path &&
-                    (cp.path?.type == GitFileType.added || cp.path?.type == GitFileType.modified)
-            })
-            if (cpsMatched.length > 0) {
-                return cpsMatched[0]
-            } else if(cpsMatched.length > 1){
-                CommitPath.logger?.info("Found more than 1 matching CommitPath in one Commit. This seems to be"
-                    + "an error. " + "Most likely the CommitPath.getNextPredecessor function has a bug.")
-            }
-            curOrder--
+    public static removeFromCPArray(locality: CommitPath, array: CommitPath[]): CommitPath[] {
+        const newCPs = []
+        for (const cp of array) {
+            // dont push pred -> will be removed
+            if (cp.is(locality)) continue
+            newCPs.push(cp)
         }
-        return null
+        return newCPs
     }
-
 
     constructor(commit?: Commit, path?: GitFile) {
         if (commit == null) return;
@@ -200,6 +173,7 @@ export class CommitPath implements Locality {
         this.parentKey = commit.key();
         this.path = path;
     }
+
 
     /**
      * Normalizes CommitPaths so that no duplicate Commits are stored.
@@ -347,8 +321,8 @@ export class CommitPath implements Locality {
         const commitPropertyDescriptors = Object.getOwnPropertyDescriptors(CommitPath.prototype).commit;
 
         Object.defineProperty(localityDTO, "commit", {
-           get: commitPropertyDescriptors.get,
-           set: commitPropertyDescriptors.set
+            get: commitPropertyDescriptors.get,
+            set: commitPropertyDescriptors.set
         });
         // @formatter:on
     }

@@ -1,9 +1,9 @@
 import {inject, injectable} from "inversify";
 import {LocalityRecorder} from "bugfinder-framework";
-import {CommitPath} from "./commitPath";
 import {Commit} from "bugfinder-localityrecorder-commit";
 import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "./TYPES";
 import {CommitToCommitPathMapper} from "./commitToCommitPath";
+import {CommitPath} from "./commitPath";
 
 @injectable()
 export class CommitPathRecorder implements LocalityRecorder<CommitPath> {

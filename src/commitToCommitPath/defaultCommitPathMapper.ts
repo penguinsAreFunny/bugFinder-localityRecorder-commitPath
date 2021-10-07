@@ -33,7 +33,7 @@ export class DefaultCommitPathMapper implements CommitToCommitPathMapper {
                 localities.push(locality);
             })
         });
-        console.log("0-localities for each file of each commit: ", localities.length)
+        console.log("localities for each file of each commit: ", localities.length)
 
         return localities;
     }
