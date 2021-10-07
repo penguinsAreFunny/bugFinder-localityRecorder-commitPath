@@ -37,21 +37,26 @@ export declare class CommitPath implements Locality {
      * Returns up to n predecessors for each CommitPath of localities
      * @param localities
      * @param n
+     * @param upToN
      * @param allLocalities
      */
-    static getNPredecessorsArray(localities: CommitPath[], n: number, allLocalities: CommitPath[]): Array<CommitPath[]>;
+    static getNPredecessorsArray(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]): Array<CommitPath[]>;
     /**
      * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
+     * Returns null on finding less than n predecessors if upToN is false
      * @param locality
      * @param n
+     * @param upToN also return predecessors if less than n predecessors are found. False: return null if less than
+     *        n predecessors are found
      * @param allLocalities
      * @param initMode initializes map over allLocalities. If you want to call this function many times with same
      *          allLocalities you can set this to false after first call! This will achieve huge performance advantages
      */
-    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[], initMode?: boolean): CommitPath[];
+    static getNPredecessors(locality: CommitPath, n: number, upToN: boolean, allLocalities: CommitPath[], initMode?: boolean): CommitPath[];
     /**
-     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched and no match was found
+     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched
+     * and no match was found
      * @param path of the CommitPath of which the predecessor should be returned
      * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
      * @param beginOrder order of the CommitPath of which the predecessor should be returned
@@ -105,8 +110,8 @@ export declare class CommitPath implements Locality {
     set commit(commit: Commit);
     /**
      * (file)path of a commit which should be measured and annotated
-     * file can be undefined if commit does not affect a file. These commitsPaths are needed to reconstruct Commit-History.
-     * example for undeinfed files: certain merge commits
+     * file can be undefined if commit does not affect a file. These commitsPaths are needed to
+     * reconstruct Commit-History. example for undeinfed files: certain merge commits
      */
     path?: GitFile;
     parentKey: string;
