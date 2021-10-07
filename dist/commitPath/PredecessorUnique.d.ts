@@ -1,6 +1,7 @@
-import { CommitPath, PredecessorDelegation } from "../../../implementation/src/01-recording/01a-localities/commitPath";
 import { LocalityMap } from "bugfinder-framework";
 import { Logger } from "ts-log";
+import { PredecessorDelegation } from "./PredecessorDelegation";
+import { CommitPath } from "./commitPath";
 export declare class PredecessorsUnique implements PredecessorDelegation {
     private logger?;
     private orderedLocalities;
