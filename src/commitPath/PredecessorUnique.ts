@@ -1,8 +1,9 @@
-import {CommitPath, PredecessorDelegation} from "../../../implementation/src/01-recording/01a-localities/commitPath";
 import {GitFileType} from "bugfinder-localityrecorder-commit";
 import {LocalityMap} from "bugfinder-framework";
 import {Logger} from "ts-log";
 import _ from "underscore";
+import {PredecessorDelegation} from "./PredecessorDelegation";
+import {CommitPath} from "./commitPath";
 
 export class PredecessorsUnique implements PredecessorDelegation {
     // used for getNPredecessors: Performance optimization
