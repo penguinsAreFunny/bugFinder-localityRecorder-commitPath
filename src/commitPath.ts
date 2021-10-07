@@ -62,9 +62,12 @@ export class CommitPath implements Locality {
      * Returns up to n predecessors for each CommitPath of localities
      * @param localities
      * @param n
+     * @param upToN
      * @param allLocalities
      */
-    static getNPredecessorsArray(localities: CommitPath[], n: number, allLocalities: CommitPath[]): Array<CommitPath[]> {
+    static getNPredecessorsArray(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[])
+        : Array<CommitPath[]> {
+
         const preds: Array<CommitPath[]> = []
         let locsWithExactlyNPreds = 0
 
@@ -74,31 +77,40 @@ export class CommitPath implements Locality {
                 console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
 
             let pred = []
-            pred = i == 0 ? CommitPath.getNPredecessors(loc, n, allLocalities) :
-                CommitPath.getNPredecessors(loc, n, allLocalities, false)
+            pred = i == 0 ? CommitPath.getNPredecessors(loc, n, upToN, allLocalities) :
+                CommitPath.getNPredecessors(loc, n, upToN, allLocalities, false)
 
-            if (pred.length == n)
+            if (pred?.length == n)
                 locsWithExactlyNPreds++
-            if (pred.length > n)
-                console.log("FUUUUCK")
+            if (pred?.length > n)
+                this.logger?.error(`Error during getNPredecessorsArray: got more than ${n} predecessors.`)
 
             preds.push(pred)
         }
 
-        console.log(`Found ${locsWithExactlyNPreds} localities with exactly ${n} predecessors.`)
+        this.logger?.info(`Found ${locsWithExactlyNPreds} localities with exactly ${n} predecessors.`)
         return preds
     }
 
     /**
      * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
+     * Returns null on finding less than n predecessors if upToN is false
      * @param locality
      * @param n
+     * @param upToN also return predecessors if less than n predecessors are found. False: return null if less than
+     *        n predecessors are found
      * @param allLocalities
      * @param initMode initializes map over allLocalities. If you want to call this function many times with same
      *          allLocalities you can set this to false after first call! This will achieve huge performance advantages
      */
-    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[], initMode: boolean = true): CommitPath[] {
+    static getNPredecessors(locality: CommitPath,
+                            n: number,
+                            upToN: boolean,
+                            allLocalities: CommitPath[],
+                            initMode: boolean = true)
+        : CommitPath[] {
+
         if (allLocalities == null || allLocalities.length == 0) {
             return []
         }
@@ -139,11 +151,15 @@ export class CommitPath implements Locality {
             predecessors.push(pred)
             curOrder = pred.commit.order - 1
         }
+
+        if (!upToN && predecessors.length < n)
+            return null
         return predecessors
     }
 
     /**
-     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched and no match was found
+     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched
+     * and no match was found
      * @param path of the CommitPath of which the predecessor should be returned
      * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
      * @param beginOrder order of the CommitPath of which the predecessor should be returned
@@ -169,8 +185,8 @@ export class CommitPath implements Locality {
             if (cpsMatched.length > 0) {
                 return cpsMatched[0]
             } else if(cpsMatched.length > 1){
-                CommitPath.logger?.info("Found more than 1 matching CommitPath in one Commit. This seems to be an error."+
-                    "Most likely the CommitPath.getNextPredecessor function has a bug.")
+                CommitPath.logger?.info("Found more than 1 matching CommitPath in one Commit. This seems to be"
+                    + "an error. " + "Most likely the CommitPath.getNextPredecessor function has a bug.")
             }
             curOrder--
         }
@@ -349,8 +365,8 @@ export class CommitPath implements Locality {
 
     /**
      * (file)path of a commit which should be measured and annotated
-     * file can be undefined if commit does not affect a file. These commitsPaths are needed to reconstruct Commit-History.
-     * example for undeinfed files: certain merge commits
+     * file can be undefined if commit does not affect a file. These commitsPaths are needed to
+     * reconstruct Commit-History. example for undeinfed files: certain merge commits
      */
     path?: GitFile;
 
