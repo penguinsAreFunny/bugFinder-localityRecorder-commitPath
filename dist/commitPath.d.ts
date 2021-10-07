@@ -33,6 +33,14 @@ export declare class CommitPath implements Locality {
      */
     static get commitMap(): Map<string, Commit>;
     /**
+     * Performance optimizes wrapper call to CommitPath.getNPredecessors
+     * Returns up to n predecessors for each CommitPath of localities
+     * @param localities
+     * @param n
+     * @param allLocalities
+     */
+    static getNPredecessorsArray(localities: CommitPath[], n: number, allLocalities: CommitPath[]): Array<CommitPath[]>;
+    /**
      * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
      * @param locality
