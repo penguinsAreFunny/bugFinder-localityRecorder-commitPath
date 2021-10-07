@@ -1,6 +1,8 @@
 import { Locality } from "bugfinder-framework";
 import { Commit, GitFile } from "bugfinder-localityrecorder-commit";
+import { Logger } from "ts-log";
 export declare class CommitPath implements Locality {
+    static logger: Logger;
     /**
      * Map of Commit.key to Commit. Used to normalize CommitPaths and reduce redundancy
      * It is not a common use case to change anything in this map!
@@ -12,6 +14,8 @@ export declare class CommitPath implements Locality {
      * to normalize CommitPaths to Commits and the Paths of CommitPaths
      */
     static _commits: Commit[];
+    private static orderedLocalities;
+    private static minOrder;
     /**
      * To achieve normalization und reduce redundancy commits
      * are stored static and received functional with getter method
@@ -30,12 +34,14 @@ export declare class CommitPath implements Locality {
     static get commitMap(): Map<string, Commit>;
     /**
      * TODO: renaming of paths
-     * Returns up to n predecessor CommitPaths of locality
+     * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
      * @param locality
      * @param n
      * @param allLocalities
+     * @param initMode initializes map over allLocalities. If you want to call this function many times with same
+     *          allLocalities you can set this to false after first call! This will achieve huge performance advantages
      */
-    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[]): CommitPath[];
+    static getNPredecessors(locality: CommitPath, n: number, allLocalities: CommitPath[], initMode?: boolean): CommitPath[];
     /**
      * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched and no match was found
      * @param path of the CommitPath of which the predecessor should be returned
