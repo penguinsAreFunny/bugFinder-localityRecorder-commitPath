@@ -24,7 +24,6 @@ export declare class PredecessorDefault implements PredecessorDelegation {
      */
     getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]): LocalityMap<CommitPath, CommitPath[]>;
     /**
-     * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality including locality. Predecessors match the path of locality
      * Returns null on finding less than n predecessors if upToN is false
      * @param locality
