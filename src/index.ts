@@ -1,7 +1,7 @@
 import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "./TYPES";
 import {CommitToCommitPathMapper, DefaultCommitPathMapper} from "./commitToCommitPath";
 import {localityAContainer} from "bugfinder-framework-defaultcontainer";
-import "bugfinder-localityrecorder-commit";// TODO: delete me and test if DI is still working for localityAContainer
+import "bugfinder-localityrecorder-commit";
 import {FileAndConsoleLogger, LogConfig} from "bugfinder-framework";
 import {Logger} from "ts-log";
 

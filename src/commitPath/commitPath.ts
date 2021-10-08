@@ -332,7 +332,6 @@ export class CommitPath implements Locality {
     }
 
     set commit(commit: Commit) {
-        // TODO: überlegen ob bisheriger Commit gelöscht werden sollte | also bisheriger parentKey
         this.parentKey = commit.key();
         CommitPath.pushCommit(commit);
     }

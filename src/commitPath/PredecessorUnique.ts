@@ -75,17 +75,12 @@ export class PredecessorsUnique implements PredecessorDelegation {
                 allPreds.set(p, true)
             }
             preds.set(loc, pred)
-            //console.log("\nPred of ", loc.commit.order + " " + loc.path.path)
-            for(const p of pred){
-                //   console.log("\t" + p.commit.order + " " + p.path.path)
-            }
         }
 
         return preds
     }
 
     /**
-     * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality including locality. Predecessors match the path of locality
      * Returns null on finding less than n predecessors if upToN is false
      * @param locality

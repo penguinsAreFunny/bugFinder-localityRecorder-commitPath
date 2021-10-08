@@ -57,7 +57,6 @@ export class PredecessorDefault implements PredecessorDelegation {
     }
 
     /**
-     * TODO: renaming of paths
      * Returns up to n predecessor CommitPaths of locality including locality. Predecessors match the path of locality
      * Returns null on finding less than n predecessors if upToN is false
      * @param locality

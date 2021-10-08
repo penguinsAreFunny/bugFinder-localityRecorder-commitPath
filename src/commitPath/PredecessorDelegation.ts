@@ -5,6 +5,7 @@ export interface PredecessorDelegation {
     getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[])
         : LocalityMap<CommitPath, CommitPath[]>
 
+    // TODO: Path renaming missing yet
     getNPredecessors(locality: CommitPath,
                      n: number,
                      upToN: boolean,
