@@ -1,14 +1,14 @@
 import * as crypto from "crypto";
-import {Locality, LocalityMap} from "bugfinder-framework";
+import {Locality, LocalityMap, SHARED_TYPES} from "bugfinder-framework";
 import {Commit, GitFile} from "bugfinder-localityrecorder-commit";
 import {inject, optional} from "inversify";
-import {BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES} from "../TYPES";
 import {Logger} from "ts-log";
 import {PredecessorDefault} from "./PredecessorDefault";
 import {PredecessorDelegation} from "./PredecessorDelegation";
 
 export class CommitPath implements Locality {
-    @optional() @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.logger)
+
+    @optional() @inject(SHARED_TYPES.logger)
     static _logger?: Logger
 
     static set logger(logger: Logger) {

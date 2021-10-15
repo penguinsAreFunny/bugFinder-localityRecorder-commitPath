@@ -9,13 +9,15 @@ import {CommitPath} from "./commitPath";
  * Calculates predecessors of a CommitPath.
  */
 export class PredecessorDefault implements PredecessorDelegation {
+
+    constructor(private logger?: Logger) {
+    }
+
     // used for getNPredecessors: Performance optimization
     private orderedLocalities: Map<number, CommitPath[]> = new Map<number, CommitPath[]>()
     // used for getNPredecessors
     private minOrder: number
 
-    constructor(private logger?: Logger) {
-    }
 
     /**
      * Performance optimizes wrapper call to CommitPath.getNPredecessors
@@ -108,7 +110,7 @@ export class PredecessorDefault implements PredecessorDelegation {
 
         while (predecessors.length < n) {
             const pred = this.getNextPredecessor(locality.path?.path, orderedLocalities, curOrder, minOrder, allLocalities)
-            if (pred == null) return predecessors
+            if (pred == null) break
 
             predecessors.push(pred)
             curOrder = pred.commit.order - 1
