@@ -4,9 +4,9 @@ import { PredecessorDelegation } from "./PredecessorDelegation";
 import { CommitPath } from "./commitPath";
 export declare class PredecessorsUnique implements PredecessorDelegation {
     private logger?;
+    constructor(logger?: Logger);
     private orderedLocalities;
     private minOrder;
-    constructor(logger?: Logger);
     /**
      * Performance optimizes wrapper call to this.getNPredecessorsUnique
      * Returns up to n predecessors for each CommitPath of localities including the CommitPath itself
