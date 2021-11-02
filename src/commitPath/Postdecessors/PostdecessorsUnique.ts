@@ -1,11 +1,11 @@
 import {GitFileType} from "bugfinder-localityrecorder-commit";
-import {LocalityMap, SHARED_TYPES} from "bugfinder-framework";
+import {LocalityMap} from "bugfinder-framework";
 import {Logger} from "ts-log";
 import _ from "underscore";
-import {PredecessorDelegation} from "./PredecessorDelegation";
-import {CommitPath} from "./commitPath";
+import {CommitPath} from "../commitPath";
+import {PostdecessorsDelegation} from "./PostdecessorsDelegation";
 
-export class PredecessorsUnique implements PredecessorDelegation {
+export class PostdecessorsUnique implements PostdecessorsDelegation {
 
     constructor(private logger?: Logger) {
     }
@@ -13,7 +13,7 @@ export class PredecessorsUnique implements PredecessorDelegation {
     // used for getNPredecessors: Performance optimization
     private orderedLocalities: Map<number, CommitPath[]> = new Map<number, CommitPath[]>()
     // used for getNPredecessors
-    private minOrder: number
+    private maxOrder: number
 
 
     /**
@@ -28,17 +28,17 @@ export class PredecessorsUnique implements PredecessorDelegation {
      * @param upToN
      * @param allLocalities
      */
-    getNPredecessorsMap(localities: CommitPath[],
-                        n: number,
-                        upToN: boolean,
-                        allLocalities: CommitPath[])
+    getNPostdecessorsMap(localities: CommitPath[],
+                         n: number,
+                         upToN: boolean,
+                         allLocalities: CommitPath[])
         : LocalityMap<CommitPath, CommitPath[]> {
 
         //
-        const preds: LocalityMap<CommitPath, CommitPath[]> = new LocalityMap<CommitPath, CommitPath[]>()
+        const posts: LocalityMap<CommitPath, CommitPath[]> = new LocalityMap<CommitPath, CommitPath[]>()
         // all localities used in predecessors are stored here with the flag that they are already used
-        const allPreds: LocalityMap<CommitPath, boolean> = new LocalityMap<CommitPath, boolean>()
-        let locsWithExactlyNPreds = 0
+        const allPosts: LocalityMap<CommitPath, boolean> = new LocalityMap<CommitPath, boolean>()
+        let locsWithExactlyNPosts = 0
 
         const localitiesCopy = localities.slice()
         // order all localities by commit.order beginning with highest
@@ -50,27 +50,27 @@ export class PredecessorsUnique implements PredecessorDelegation {
         for (let i = 0; i < initLength; i++) {
             const loc = orderedLocs[i]
             // this locality is already inside a sequence
-            if (allPreds.getVal(loc) != null) continue
+            if (allPosts.getVal(loc) != null) continue
 
             if (i % 50 == 0 && i != 0)
-                console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
+                console.log(`Calculated the ${n} postdecessors from ${i} of ${localities.length} localities...`)
 
-            let pred = []
-            pred = i == 0 ? this.getNPredecessors(loc, n, upToN, allLocalities) :
-                this.getNPredecessors(loc, n, upToN, allLocalities, false)
+            let post = []
+            post = i == 0 ? this.getNPostdecessors(loc, n, upToN, allLocalities) :
+                this.getNPostdecessors(loc, n, upToN, allLocalities, false)
 
-            if (pred == null) {
-                preds.set(loc, pred)
+            if (post == null) {
+                posts.set(loc, post)
                 continue
             }
 
-            if (pred.length == n)
-                locsWithExactlyNPreds++
+            if (post.length == n)
+                locsWithExactlyNPosts++
 
             // do not take predecessors to result if one of the predecessors is already taken!
             let duplicateFound = false
-            for (const p of pred) {
-                if (allPreds.getVal(p) != null) {
+            for (const p of post) {
+                if (allPosts.getVal(p) != null) {
                     duplicateFound = true
                     break
                 }
@@ -78,13 +78,13 @@ export class PredecessorsUnique implements PredecessorDelegation {
             if (duplicateFound) continue
 
             // set all used localities
-            for (const p of pred) {
-                allPreds.set(p, true)
+            for (const p of post) {
+                allPosts.set(p, true)
             }
-            preds.set(loc, pred)
+            posts.set(loc, post)
         }
 
-        return preds
+        return posts
     }
 
     /**
@@ -98,11 +98,11 @@ export class PredecessorsUnique implements PredecessorDelegation {
      * @param initMode initializes map over allLocalities. If you want to call this function many times with same
      *          allLocalities you can set this to false after first call! This will achieve huge performance advantages
      */
-    getNPredecessors(locality: CommitPath,
-                     n: number,
-                     upToN: boolean,
-                     allLocalities: CommitPath[],
-                     initMode: boolean = true)
+    getNPostdecessors(locality: CommitPath,
+                      n: number,
+                      upToN: boolean,
+                      allLocalities: CommitPath[],
+                      initMode: boolean = true)
         : CommitPath[] {
 
         if (allLocalities == null || allLocalities.length == 0) {
@@ -110,67 +110,66 @@ export class PredecessorsUnique implements PredecessorDelegation {
         }
 
         let orderedLocalities: Map<number, CommitPath[]>
-        let minOrder: number
+        let maxOrder: number
         // init: performance optimization
         if (initMode) {
             // init map from order to CommitPath[] and set minOrder
             orderedLocalities = new Map<number, CommitPath[]>()
-            minOrder = allLocalities[0].commit.order
+            maxOrder = allLocalities[0].commit.order
 
             for (const aLoc of allLocalities) {
                 let cps = orderedLocalities.get(aLoc.commit.order)
                 cps = cps == null ? [aLoc] : [...cps, aLoc]
                 orderedLocalities.set(aLoc.commit.order, cps)
 
-                if (aLoc.commit.order < minOrder) minOrder = aLoc.commit.order
+                if (aLoc.commit.order > maxOrder) maxOrder = aLoc.commit.order
             }
             this.orderedLocalities = orderedLocalities
-            this.minOrder = minOrder
+            this.maxOrder = maxOrder
         } else {
-            // get Map and minOrder from last calculations with initMode = true
+            // get Map and maxOrder from last calculations with initMode = true
             orderedLocalities = this.orderedLocalities
-            minOrder = this.minOrder
+            maxOrder = this.maxOrder
         }
 
-
-        // calculating predecessor CommitPaths
+        // calculating postdecessor CommitPaths
         let curOrder = locality.commit.order - 1
-        const predecessors: CommitPath[] = [locality]
+        const postdecessors: CommitPath[] = [locality]
 
-        while (predecessors.length < n) {
-            const pred = this.getNextPredecessor(locality.path?.path, orderedLocalities, curOrder, minOrder,
+        while (postdecessors.length < n) {
+            const post = this.getNextPostdecessor(locality.path?.path, orderedLocalities, curOrder, maxOrder,
                 allLocalities)
-            if (pred == null) break
+            if (post == null) break
 
-            predecessors.push(pred)
-            curOrder = pred.commit.order - 1
+            postdecessors.push(post)
+            curOrder = post.commit.order + 1
         }
 
-        if (!upToN && predecessors.length < n) {
+        if (!upToN && postdecessors.length < n) {
             return null
         }
 
-        return predecessors
+        return postdecessors
     }
 
     /**
-     * Returns the next predecessor CommitPath, returns null if all localities until minOrder were searched
+     * Returns the next postdecessor CommitPath, returns null if all localities until maxOrder were searched
      * and no match was found
      * @param path of the CommitPath of which the predecessor should be returned
      * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
      * @param beginOrder order of the CommitPath of which the predecessor should be returned
-     * @param minOrder min order of allLocalities
+     * @param maxOrder max order of allLocalities
      * @param allLocalities
      */
-    getNextPredecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number,
-                       minOrder: number, allLocalities: CommitPath[]): CommitPath {
+    getNextPostdecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number,
+                        maxOrder: number, allLocalities: CommitPath[]): CommitPath {
         let curOrder = beginOrder
 
-        while (curOrder >= minOrder) {
+        while (curOrder <= maxOrder) {
 
             const cps = orderedLocalities.get(curOrder)
             if (cps == null) {
-                curOrder--
+                curOrder++
                 continue
             }
 
@@ -183,9 +182,9 @@ export class PredecessorsUnique implements PredecessorDelegation {
                 return cpsMatched[0]
             } else if (cpsMatched.length > 1) {
                 this.logger?.info("Found more than 1 matching CommitPath in one Commit. This seems to be"
-                    + "an error. " + "Most likely the this.getNextPredecessor function has a bug.")
+                    + "an error. " + "Most likely the this.getNextPostdecessor function has a bug.")
             }
-            curOrder--
+            curOrder++
         }
         return null
     }

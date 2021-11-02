@@ -1,14 +1,11 @@
 import {GitFileType} from "bugfinder-localityrecorder-commit";
-import {LocalityMap} from "bugfinder-framework";
+import {LocalityMap, SHARED_TYPES} from "bugfinder-framework";
 import {Logger} from "ts-log";
+import _ from "underscore";
 import {PredecessorDelegation} from "./PredecessorDelegation";
-import {CommitPath} from "./commitPath";
+import {CommitPath} from "../commitPath";
 
-
-/**
- * Calculates predecessors of a CommitPath.
- */
-export class PredecessorDefault implements PredecessorDelegation {
+export class PredecessorsUnique implements PredecessorDelegation {
 
     constructor(private logger?: Logger) {
     }
@@ -20,8 +17,8 @@ export class PredecessorDefault implements PredecessorDelegation {
 
 
     /**
-     * Performance optimizes wrapper call to CommitPath.getNPredecessors
-     * Returns up to n predecessors for each CommitPath of localities
+     * Performance optimizes wrapper call to this.getNPredecessorsUnique
+     * Returns up to n predecessors for each CommitPath of localities including the CommitPath itself
      * Returned array is in same order as localities and has same length. return[i] has the predecessor CommitPaths
      * of localities[i].
      * return[i] is null if upToN is false (exactly n predecessors should be returned) and there were less than n
@@ -31,30 +28,62 @@ export class PredecessorDefault implements PredecessorDelegation {
      * @param upToN
      * @param allLocalities
      */
-    getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[])
+    getNPredecessorsMap(localities: CommitPath[],
+                        n: number,
+                        upToN: boolean,
+                        allLocalities: CommitPath[])
         : LocalityMap<CommitPath, CommitPath[]> {
 
-        const preds = new LocalityMap<CommitPath, CommitPath[]>()
+        //
+        const preds: LocalityMap<CommitPath, CommitPath[]> = new LocalityMap<CommitPath, CommitPath[]>()
+        // all localities used in predecessors are stored here with the flag that they are already used
+        const allPreds: LocalityMap<CommitPath, boolean> = new LocalityMap<CommitPath, boolean>()
         let locsWithExactlyNPreds = 0
 
-        for (let i = 0; i < localities.length; i++) {
-            const loc = localities[i]
-            if (i % 50 == 0)
+        const localitiesCopy = localities.slice()
+        // order all localities by commit.order beginning with highest
+        let orderedLocs = _.sortBy(localitiesCopy, (loc) => {
+            return -loc.commit.order
+        })
+
+        const initLength = orderedLocs.length
+        for (let i = 0; i < initLength; i++) {
+            const loc = orderedLocs[i]
+            // this locality is already inside a sequence
+            if (allPreds.getVal(loc) != null) continue
+
+            if (i % 50 == 0 && i != 0)
                 console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
 
             let pred = []
             pred = i == 0 ? this.getNPredecessors(loc, n, upToN, allLocalities) :
                 this.getNPredecessors(loc, n, upToN, allLocalities, false)
 
-            if (pred?.length == n)
-                locsWithExactlyNPreds++
-            if (pred?.length > n)
-                this.logger?.error(`Error during getNPredecessorsArray: got more than ${n} predecessors.`)
+            if (pred == null) {
+                preds.set(loc, pred)
+                continue
+            }
 
+            if (pred.length == n)
+                locsWithExactlyNPreds++
+
+            // do not take predecessors to result if one of the predecessors is already taken!
+            let duplicateFound = false
+            for (const p of pred) {
+                if (allPreds.getVal(p) != null) {
+                    duplicateFound = true
+                    break
+                }
+            }
+            if (duplicateFound) continue
+
+            // set all used localities
+            for (const p of pred) {
+                allPreds.set(p, true)
+            }
             preds.set(loc, pred)
         }
 
-        this.logger?.info(`Found ${locsWithExactlyNPreds} localities with exactly ${n} predecessors.`)
         return preds
     }
 
@@ -109,15 +138,18 @@ export class PredecessorDefault implements PredecessorDelegation {
         const predecessors: CommitPath[] = [locality]
 
         while (predecessors.length < n) {
-            const pred = this.getNextPredecessor(locality.path?.path, orderedLocalities, curOrder, minOrder, allLocalities)
+            const pred = this.getNextPredecessor(locality.path?.path, orderedLocalities, curOrder, minOrder,
+                allLocalities)
             if (pred == null) break
 
             predecessors.push(pred)
             curOrder = pred.commit.order - 1
         }
 
-        if (!upToN && predecessors.length < n)
+        if (!upToN && predecessors.length < n) {
             return null
+        }
+
         return predecessors
     }
 
@@ -144,7 +176,8 @@ export class PredecessorDefault implements PredecessorDelegation {
 
             const cpsMatched = cps.filter(cp => {
                 return cp.path?.path == path &&
-                    (cp.path?.type == GitFileType.added || cp.path?.type == GitFileType.modified)
+                    (cp.path?.type == GitFileType.added || cp.path?.type == GitFileType.modified
+                        || cp.path?.type == GitFileType.injected)
             })
             if (cpsMatched.length > 0) {
                 return cpsMatched[0]
@@ -156,6 +189,5 @@ export class PredecessorDefault implements PredecessorDelegation {
         }
         return null
     }
-
 
 }

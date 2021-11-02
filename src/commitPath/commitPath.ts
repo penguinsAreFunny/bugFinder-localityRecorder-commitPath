@@ -3,8 +3,8 @@ import {Locality, LocalityMap, SHARED_TYPES} from "bugfinder-framework";
 import {Commit, GitFile} from "bugfinder-localityrecorder-commit";
 import {inject, optional} from "inversify";
 import {Logger} from "ts-log";
-import {PredecessorDefault} from "./PredecessorDefault";
-import {PredecessorDelegation} from "./PredecessorDelegation";
+import {PredecessorDefault, PredecessorDelegation} from "./Predecessors";
+import {PostdecessorsDefault, PostdecessorsDelegation} from "./Postdecessors";
 
 export class CommitPath implements Locality {
 
@@ -40,6 +40,12 @@ export class CommitPath implements Locality {
     private static predecessorDelegation: PredecessorDelegation = new PredecessorDefault()
 
     /**
+     * Delegation to calculate postdecessors with different strategies
+     * @private
+     */
+    private static postdecessorDelegation: PostdecessorsDelegation = new PostdecessorsDefault()
+
+    /**
      * Set the predecessorDelegation to change the method of calculating predecessors
      * @param predecessorDelegation
      */
@@ -48,13 +54,71 @@ export class CommitPath implements Locality {
     }
 
     /**
+     * Set the postdecessorDelegation to change the method of calculating postdecessors alias progeny
+     * @param postdecessorDelegation
+     */
+    static setPostdecessorDelegation(postdecessorDelegation: PostdecessorsDelegation){
+        CommitPath.postdecessorDelegation = postdecessorDelegation
+    }
+
+    /**
+     * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
+     * Performance optimizes wrapper call to CommitPath.getNPostdecessors
+     * Returns up to n postdecessors (progeny CommitPaths) for each CommitPath of localities
+     * @param localities
+     * @param n
+     * @param upToN
+     * @param allLocalities
+     */
+    static getNPostdecessorMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]):
+        LocalityMap<CommitPath, CommitPath[]> {
+
+        return CommitPath.postdecessorDelegation.getNPostdecessorsMap(localities, n, upToN, allLocalities)
+    }
+    /**
+     * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
+     * Returns up to n postdecessors CommitPaths of locality. Postdecessors match the path of locality
+     * Returns null on finding less than n predecessors if upToN is false
+     * Set initMode after first call to false to achieve performance optimization
+     * @param locality
+     * @param n
+     * @param upToN also return predecessors if less than n predecessors are found. False: return null if less than
+     *        n predecessors are found
+     * @param allLocalities
+     * @param initMode initializes map over allLocalities. If you want to call this function many times with same
+     *                 allLocalities you can set this to false after first call!
+     *                 This will achieve huge performance advantages.
+     */
+    static getNPostdecessors(locality: CommitPath, n: number, upToN: boolean, allLocalities: CommitPath[],
+                             initMode: any): CommitPath[] {
+
+        return CommitPath.postdecessorDelegation.getNPostdecessors(locality, n, upToN, allLocalities, initMode)
+    }
+
+    /**
+     * Returns the next postdecessor CommitPath, returns null if all localities until maxOrder were searched
+     * and no match was found
+     * @param path of the CommitPath of which the predecessor should be returned
+     * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
+     * @param beginOrder order of the CommitPath of which the predecessor should be returned
+     * @param maxOrder min order of allLocalities
+     * @param allLocalities
+     */
+    static getNextPostdecessor(path: string,
+                              orderedLocalities: Map<number, CommitPath[]>,
+                              beginOrder: number,
+                              maxOrder: number,
+                              allLocalities: CommitPath[]): CommitPath {
+
+        return CommitPath.predecessorDelegation.getNextPredecessor(path, orderedLocalities, beginOrder,
+            maxOrder, allLocalities)
+    }
+
+
+    /**
      * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
      * Performance optimizes wrapper call to CommitPath.getNPredecessors
      * Returns up to n predecessors for each CommitPath of localities
-     * Returned array is in same order as localities and has same length. return[i] has the predecessor CommitPaths
-     * of localities[i].
-     * return[i] is null if upToN is false (exactly n predecessors should be returned) and there were less than n
-     * predecessors in allLocalities
      * @param localities
      * @param n
      * @param upToN
@@ -83,7 +147,7 @@ export class CommitPath implements Locality {
     static getNPredecessors(locality: CommitPath, n: number, upToN: boolean, allLocalities: CommitPath[], initMode: any)
         : CommitPath[] {
 
-        return CommitPath.getNPredecessors(locality, n, upToN, allLocalities, initMode)
+        return CommitPath.predecessorDelegation.getNPredecessors(locality, n, upToN, allLocalities, initMode)
     }
 
     /**
@@ -101,7 +165,7 @@ export class CommitPath implements Locality {
                               minOrder: number,
                               allLocalities: CommitPath[]): CommitPath {
 
-        return CommitPath.getNextPredecessor(path, orderedLocalities, beginOrder, minOrder, allLocalities)
+        return CommitPath.predecessorDelegation.getNextPredecessor(path, orderedLocalities, beginOrder, minOrder, allLocalities)
     }
 
     /**
