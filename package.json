@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@types/node": "^15.12.2",
-    "bugfinder-framework": "^9.7.0",
+    "bugfinder-framework": "^9.13.2",
     "bugfinder-localityrecorder-commit": "^2.7.1",
     "inversify": "^5.1.1",
     "reflect-metadata": "^0.1.13"
