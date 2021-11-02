@@ -1,7 +1,8 @@
 import { Locality, LocalityMap } from "bugfinder-framework";
 import { Commit, GitFile } from "bugfinder-localityrecorder-commit";
 import { Logger } from "ts-log";
-import { PredecessorDelegation } from "./PredecessorDelegation";
+import { PredecessorDelegation } from "./Predecessors";
+import { PostdecessorsDelegation } from "./Postdecessors";
 export declare class CommitPath implements Locality {
     static _logger?: Logger;
     static set logger(logger: Logger);
@@ -23,18 +24,59 @@ export declare class CommitPath implements Locality {
      */
     private static predecessorDelegation;
     /**
+     * Delegation to calculate postdecessors with different strategies
+     * @private
+     */
+    private static postdecessorDelegation;
+    /**
      * Set the predecessorDelegation to change the method of calculating predecessors
      * @param predecessorDelegation
      */
     static setPredecessorDelegation(predecessorDelegation: PredecessorDelegation): void;
     /**
+     * Set the postdecessorDelegation to change the method of calculating postdecessors alias progeny
+     * @param postdecessorDelegation
+     */
+    static setPostdecessorDelegation(postdecessorDelegation: PostdecessorsDelegation): void;
+    /**
+     * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
+     * Performance optimizes wrapper call to CommitPath.getNPostdecessors
+     * Returns up to n postdecessors (progeny CommitPaths) for each CommitPath of localities
+     * @param localities
+     * @param n
+     * @param upToN
+     * @param allLocalities
+     */
+    static getNPostdecessorMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]): LocalityMap<CommitPath, CommitPath[]>;
+    /**
+     * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
+     * Returns up to n postdecessors CommitPaths of locality. Postdecessors match the path of locality
+     * Returns null on finding less than n predecessors if upToN is false
+     * Set initMode after first call to false to achieve performance optimization
+     * @param locality
+     * @param n
+     * @param upToN also return predecessors if less than n predecessors are found. False: return null if less than
+     *        n predecessors are found
+     * @param allLocalities
+     * @param initMode initializes map over allLocalities. If you want to call this function many times with same
+     *                 allLocalities you can set this to false after first call!
+     *                 This will achieve huge performance advantages.
+     */
+    static getNPostdecessors(locality: CommitPath, n: number, upToN: boolean, allLocalities: CommitPath[], initMode: any): CommitPath[];
+    /**
+     * Returns the next postdecessor CommitPath, returns null if all localities until maxOrder were searched
+     * and no match was found
+     * @param path of the CommitPath of which the predecessor should be returned
+     * @param orderedLocalities a map of order (of all localities: CommitPath[]) to CommitPath[] with that order
+     * @param beginOrder order of the CommitPath of which the predecessor should be returned
+     * @param maxOrder min order of allLocalities
+     * @param allLocalities
+     */
+    static getNextPostdecessor(path: string, orderedLocalities: Map<number, CommitPath[]>, beginOrder: number, maxOrder: number, allLocalities: CommitPath[]): CommitPath;
+    /**
      * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
      * Performance optimizes wrapper call to CommitPath.getNPredecessors
      * Returns up to n predecessors for each CommitPath of localities
-     * Returned array is in same order as localities and has same length. return[i] has the predecessor CommitPaths
-     * of localities[i].
-     * return[i] is null if upToN is false (exactly n predecessors should be returned) and there were less than n
-     * predecessors in allLocalities
      * @param localities
      * @param n
      * @param upToN

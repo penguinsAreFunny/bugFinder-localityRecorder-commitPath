@@ -47,9 +47,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommitPathRecorder = void 0;
 var inversify_1 = require("inversify");
+var bugfinder_localityrecorder_commit_1 = require("bugfinder-localityrecorder-commit");
 var TYPES_1 = require("./TYPES");
+var commitToCommitPath_1 = require("./commitToCommitPath");
 var CommitPathRecorder = /** @class */ (function () {
     function CommitPathRecorder() {
+        this.commitType = new bugfinder_localityrecorder_commit_1.CommitRecorder();
+        this.mapper = new commitToCommitPath_1.DefaultCommitPathMapper();
     }
     CommitPathRecorder.prototype.getLocalities = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -67,10 +71,12 @@ var CommitPathRecorder = /** @class */ (function () {
         });
     };
     __decorate([
+        (0, inversify_1.optional)(),
         (0, inversify_1.inject)(TYPES_1.BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.commitRecorder),
         __metadata("design:type", Object)
     ], CommitPathRecorder.prototype, "commitType", void 0);
     __decorate([
+        (0, inversify_1.optional)(),
         (0, inversify_1.inject)(TYPES_1.BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.commitToCommitPathMapper),
         __metadata("design:type", Object)
     ], CommitPathRecorder.prototype, "mapper", void 0);
@@ -80,4 +86,4 @@ var CommitPathRecorder = /** @class */ (function () {
     return CommitPathRecorder;
 }());
 exports.CommitPathRecorder = CommitPathRecorder;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29tbWl0UGF0aFJlY29yZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vc3JjL2NvbW1pdFBhdGhSZWNvcmRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSx1Q0FBNkM7QUFHN0MsaUNBQW9FO0FBS3BFO0lBQUE7SUFhQSxDQUFDO0lBTlMsMENBQWEsR0FBbkI7Ozs7Ozt3QkFDSSxPQUFPLENBQUMsR0FBRyxDQUFDLDZDQUE2QyxDQUFDLENBQUM7d0JBQ2pDLHFCQUFNLElBQUksQ0FBQyxVQUFVLENBQUMsYUFBYSxFQUFFLEVBQUE7O3dCQUF6RCxPQUFPLEdBQWEsU0FBcUM7d0JBQy9ELHNCQUFPLElBQUksQ0FBQyxNQUFNLENBQUMsR0FBRyxDQUFDLE9BQU8sQ0FBQyxFQUFDOzs7O0tBQ25DO0lBVEQ7UUFEQyxJQUFBLGtCQUFNLEVBQUMsbURBQTJDLENBQUMsY0FBYyxDQUFDOzswREFDOUI7SUFHckM7UUFEQyxJQUFBLGtCQUFNLEVBQUMsbURBQTJDLENBQUMsd0JBQXdCLENBQUM7O3NEQUM1QztJQUx4QixrQkFBa0I7UUFEOUIsSUFBQSxzQkFBVSxHQUFFO09BQ0Esa0JBQWtCLENBYTlCO0lBQUQseUJBQUM7Q0FBQSxBQWJELElBYUM7QUFiWSxnREFBa0IifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29tbWl0UGF0aFJlY29yZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vc3JjL2NvbW1pdFBhdGhSZWNvcmRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSx1Q0FBdUQ7QUFFdkQsdUZBQXlFO0FBQ3pFLGlDQUFvRTtBQUNwRSwyREFBdUY7QUFJdkY7SUFBQTtRQUVJLGVBQVUsR0FBNkIsSUFBSSxrREFBYyxFQUFFLENBQUE7UUFHM0QsV0FBTSxHQUE2QixJQUFJLDRDQUF1QixFQUFFLENBQUE7SUFRcEUsQ0FBQztJQU5TLDBDQUFhLEdBQW5COzs7Ozs7d0JBQ0ksT0FBTyxDQUFDLEdBQUcsQ0FBQyw2Q0FBNkMsQ0FBQyxDQUFBO3dCQUNoQyxxQkFBTSxJQUFJLENBQUMsVUFBVSxDQUFDLGFBQWEsRUFBRSxFQUFBOzt3QkFBekQsT0FBTyxHQUFhLFNBQXFDO3dCQUMvRCxzQkFBTyxJQUFJLENBQUMsTUFBTSxDQUFDLEdBQUcsQ0FBQyxPQUFPLENBQUMsRUFBQTs7OztLQUNsQztJQVREO1FBREMsSUFBQSxvQkFBUSxHQUFFO1FBQUUsSUFBQSxrQkFBTSxFQUFDLG1EQUEyQyxDQUFDLGNBQWMsQ0FBQzs7MERBQ3BCO0lBRzNEO1FBREMsSUFBQSxvQkFBUSxHQUFFO1FBQUUsSUFBQSxrQkFBTSxFQUFDLG1EQUEyQyxDQUFDLHdCQUF3QixDQUFDOztzREFDekI7SUFMdkQsa0JBQWtCO1FBRDlCLElBQUEsc0JBQVUsR0FBRTtPQUNBLGtCQUFrQixDQWE5QjtJQUFELHlCQUFDO0NBQUEsQUFiRCxJQWFDO0FBYlksZ0RBQWtCIn0=

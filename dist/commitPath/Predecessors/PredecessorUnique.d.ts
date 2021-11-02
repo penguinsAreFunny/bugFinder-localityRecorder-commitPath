@@ -1,18 +1,15 @@
 import { LocalityMap } from "bugfinder-framework";
 import { Logger } from "ts-log";
 import { PredecessorDelegation } from "./PredecessorDelegation";
-import { CommitPath } from "./commitPath";
-/**
- * Calculates predecessors of a CommitPath.
- */
-export declare class PredecessorDefault implements PredecessorDelegation {
+import { CommitPath } from "../commitPath";
+export declare class PredecessorsUnique implements PredecessorDelegation {
     private logger?;
     constructor(logger?: Logger);
     private orderedLocalities;
     private minOrder;
     /**
-     * Performance optimizes wrapper call to CommitPath.getNPredecessors
-     * Returns up to n predecessors for each CommitPath of localities
+     * Performance optimizes wrapper call to this.getNPredecessorsUnique
+     * Returns up to n predecessors for each CommitPath of localities including the CommitPath itself
      * Returned array is in same order as localities and has same length. return[i] has the predecessor CommitPaths
      * of localities[i].
      * return[i] is null if upToN is false (exactly n predecessors should be returned) and there were less than n
