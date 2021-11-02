@@ -1,5 +1,5 @@
 import {LocalityMap} from "bugfinder-framework";
-import {CommitPath} from "./commitPath";
+import {CommitPath} from "../commitPath";
 
 /**
  * PostdecessorDelegation alias progeny delegation
