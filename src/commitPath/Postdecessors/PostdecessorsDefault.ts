@@ -132,7 +132,7 @@ export class PostdecessorsDefault implements PostdecessorsDelegation {
                         maxOrder: number, allLocalities: CommitPath[]): CommitPath {
         let curOrder = beginOrder
 
-        while (curOrder >= maxOrder) {
+        while (curOrder <= maxOrder) {
 
             const cps = orderedLocalities.get(curOrder)
             if (cps == null) {

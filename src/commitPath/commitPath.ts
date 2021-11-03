@@ -1,14 +1,20 @@
 import * as crypto from "crypto";
-import {Locality, LocalityMap, SHARED_TYPES} from "bugfinder-framework";
+import {FileAndConsoleLogger, Locality, LocalityMap, LogConfig, SHARED_TYPES} from "bugfinder-framework";
 import {Commit, GitFile} from "bugfinder-localityrecorder-commit";
 import {inject, optional} from "inversify";
 import {Logger} from "ts-log";
-import {PredecessorDefault, PredecessorDelegation} from "./Predecessors";
-import {PostdecessorsDefault, PostdecessorsDelegation} from "./Postdecessors";
+import {PredecessorDefault, PredecessorDelegation, PredecessorsUnique} from "./Predecessors";
+import {PostdecessorsDefault, PostdecessorsDelegation, PostdecessorsUnique} from "./Postdecessors";
 
+/**
+ * If you want logging in static methods you need to set
+ * CommitPath.logger to some Logger manually as inversify does not
+ * support static injections
+ */
 export class CommitPath implements Locality {
 
-    @optional() @inject(SHARED_TYPES.logger)
+    // no static injection possible
+    //@optional() @inject(SHARED_TYPES.logger)
     static _logger?: Logger
 
     static set logger(logger: Logger) {
@@ -57,7 +63,7 @@ export class CommitPath implements Locality {
      * Set the postdecessorDelegation to change the method of calculating postdecessors alias progeny
      * @param postdecessorDelegation
      */
-    static setPostdecessorDelegation(postdecessorDelegation: PostdecessorsDelegation){
+    static setPostdecessorDelegation(postdecessorDelegation: PostdecessorsDelegation) {
         CommitPath.postdecessorDelegation = postdecessorDelegation
     }
 
@@ -68,13 +74,27 @@ export class CommitPath implements Locality {
      * @param localities
      * @param n
      * @param upToN
+     * @param uniqueMode
      * @param allLocalities
      */
-    static getNPostdecessorMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]):
+    static getNPostdecessorMap(localities: CommitPath[], n: number, upToN: boolean, uniqueMode: boolean, allLocalities: CommitPath[]):
         LocalityMap<CommitPath, CommitPath[]> {
+
+        if (n == 0) {
+            const val = upToN? []: null
+            const ret = new LocalityMap<CommitPath, CommitPath[]>()
+            for (const loc of localities) {
+                ret.set(loc, val)
+            }
+            return ret
+        }
+
+        CommitPath.postdecessorDelegation = uniqueMode ?
+            new PostdecessorsUnique(this.logger) : new PostdecessorsDefault(this.logger)
 
         return CommitPath.postdecessorDelegation.getNPostdecessorsMap(localities, n, upToN, allLocalities)
     }
+
     /**
      * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
      * Returns up to n postdecessors CommitPaths of locality. Postdecessors match the path of locality
@@ -105,10 +125,10 @@ export class CommitPath implements Locality {
      * @param allLocalities
      */
     static getNextPostdecessor(path: string,
-                              orderedLocalities: Map<number, CommitPath[]>,
-                              beginOrder: number,
-                              maxOrder: number,
-                              allLocalities: CommitPath[]): CommitPath {
+                               orderedLocalities: Map<number, CommitPath[]>,
+                               beginOrder: number,
+                               maxOrder: number,
+                               allLocalities: CommitPath[]): CommitPath {
 
         return CommitPath.predecessorDelegation.getNextPredecessor(path, orderedLocalities, beginOrder,
             maxOrder, allLocalities)
@@ -122,10 +142,24 @@ export class CommitPath implements Locality {
      * @param localities
      * @param n
      * @param upToN
+     * @param uniqueMode
      * @param allLocalities
      */
-    static getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]):
+    static getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, uniqueMode: boolean,
+                               allLocalities: CommitPath[]):
         LocalityMap<CommitPath, CommitPath[]> {
+
+        if (n == 0) {
+            const val = upToN? []: null
+            const ret = new LocalityMap<CommitPath, CommitPath[]>()
+            for (const loc of localities) {
+                ret.set(loc, val)
+            }
+            return ret
+        }
+
+        CommitPath.predecessorDelegation = uniqueMode ?
+            new PredecessorsUnique(this.logger) : new PredecessorDefault(this.logger)
 
         return CommitPath.predecessorDelegation.getNPredecessorsMap(localities, n, upToN, allLocalities)
     }
