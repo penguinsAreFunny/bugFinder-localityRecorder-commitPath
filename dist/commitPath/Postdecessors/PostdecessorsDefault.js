@@ -154,7 +154,7 @@ var PostdecessorsDefault = /** @class */ (function () {
     PostdecessorsDefault.prototype.getNextPostdecessor = function (path, orderedLocalities, beginOrder, maxOrder, allLocalities) {
         var _a;
         var curOrder = beginOrder;
-        while (curOrder >= maxOrder) {
+        while (curOrder <= maxOrder) {
             var cps = orderedLocalities.get(curOrder);
             if (cps == null) {
                 curOrder++;

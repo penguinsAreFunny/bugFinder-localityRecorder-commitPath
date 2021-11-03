@@ -3,6 +3,11 @@ import { Commit, GitFile } from "bugfinder-localityrecorder-commit";
 import { Logger } from "ts-log";
 import { PredecessorDelegation } from "./Predecessors";
 import { PostdecessorsDelegation } from "./Postdecessors";
+/**
+ * If you want logging in static methods you need to set
+ * CommitPath.logger to some Logger manually as inversify does not
+ * support static injections
+ */
 export declare class CommitPath implements Locality {
     static _logger?: Logger;
     static set logger(logger: Logger);
@@ -45,9 +50,10 @@ export declare class CommitPath implements Locality {
      * @param localities
      * @param n
      * @param upToN
+     * @param uniqueMode
      * @param allLocalities
      */
-    static getNPostdecessorMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]): LocalityMap<CommitPath, CommitPath[]>;
+    static getNPostdecessorMap(localities: CommitPath[], n: number, upToN: boolean, uniqueMode: boolean, allLocalities: CommitPath[]): LocalityMap<CommitPath, CommitPath[]>;
     /**
      * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
      * Returns up to n postdecessors CommitPaths of locality. Postdecessors match the path of locality
@@ -80,9 +86,10 @@ export declare class CommitPath implements Locality {
      * @param localities
      * @param n
      * @param upToN
+     * @param uniqueMode
      * @param allLocalities
      */
-    static getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, allLocalities: CommitPath[]): LocalityMap<CommitPath, CommitPath[]>;
+    static getNPredecessorsMap(localities: CommitPath[], n: number, upToN: boolean, uniqueMode: boolean, allLocalities: CommitPath[]): LocalityMap<CommitPath, CommitPath[]>;
     /**
      * To change method of calculating predecessors @see CommitPath.setPredecessorDelegation
      * Returns up to n predecessor CommitPaths of locality. Predecessors match the path of locality
