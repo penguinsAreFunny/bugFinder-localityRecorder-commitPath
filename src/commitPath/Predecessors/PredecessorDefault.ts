@@ -38,8 +38,7 @@ export class PredecessorDefault implements PredecessorDelegation {
 
         for (let i = 0; i < localities.length; i++) {
             const loc = localities[i]
-            if (i % 50 == 0)
-                console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
+
 
             let pred = []
             pred = i == 0 ? this.getNPredecessors(loc, n, upToN, allLocalities) :
@@ -51,6 +50,11 @@ export class PredecessorDefault implements PredecessorDelegation {
                 this.logger?.error(`Error during getNPredecessorsArray: got more than ${n} predecessors.`)
 
             preds.set(loc, pred)
+
+            if (i % 50 == 0)
+                console.log(`INFO\tCalculated the ${n} predecessors from ${i+1} of ${localities.length} localities...`)
+            if (i == localities.length-1)
+                console.log(`INFO\tCalculated the ${n} predecessors from ${i+1} of ${localities.length} localities.`)
         }
 
         this.logger?.info(`Found ${locsWithExactlyNPreds} localities with exactly ${n} predecessors.`)

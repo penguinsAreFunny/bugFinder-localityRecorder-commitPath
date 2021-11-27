@@ -7,11 +7,11 @@ import {CommitPath} from "./commitPath";
 
 @injectable()
 export class CommitPathRecorder implements LocalityRecorder<CommitPath> {
-    @optional() @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.commitRecorder)
-    commitType: LocalityRecorder<Commit> = new CommitRecorder()
+    @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.commitRecorder)
+    commitType: LocalityRecorder<Commit>
 
     @optional() @inject(BUGFINDER_LOCALITYRECORDER_COMMITPATH_TYPES.commitToCommitPathMapper)
-    mapper: CommitToCommitPathMapper = new DefaultCommitPathMapper()
+    mapper: CommitToCommitPathMapper// = new DefaultCommitPathMapper()
 
     async getLocalities(): Promise<CommitPath[]> {
         console.log(`Running analysis and retrieving CommitPaths`)

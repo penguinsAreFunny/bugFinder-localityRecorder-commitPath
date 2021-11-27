@@ -34,9 +34,6 @@ export class PostdecessorsDefault implements PostdecessorsDelegation {
 
         for (let i = 0; i < localities.length; i++) {
             const loc = localities[i]
-            if (i % 50 == 0)
-                this.logger?.info(`Calculated the ${n} postdecessors from ${i} ` +
-                    `of ${localities.length} localities...`)
 
             let post = []
             post = i == 0 ? this.getNPostdecessors(loc, n, upToN, allLocalities) :
@@ -48,6 +45,11 @@ export class PostdecessorsDefault implements PostdecessorsDelegation {
                 this.logger?.error(`Error during getNPostdecessorsArray: got more than ${n} postdecessors.`)
 
             posts.set(loc, post)
+
+            if (i % 50 == 0)
+                console.log(`INFO\tCalculated the ${n} postdecessors from ${i+1} of ${localities.length} localities...`)
+            if (i == localities.length-1)
+                console.log(`INFO\tCalculated the ${n} postdecessors from ${i+1} of ${localities.length} localities.`)
         }
 
         this.logger?.info(`Found ${locsWithExactlyNPosts} localities with exactly ${n} postdecessors.`)

@@ -52,9 +52,6 @@ export class PredecessorsUnique implements PredecessorDelegation {
             // this locality is already inside a sequence
             if (allPreds.getVal(loc) != null) continue
 
-            if (i % 50 == 0 && i != 0)
-                console.log(`Calculated the ${n} predecessors from ${i} of ${localities.length} localities...`)
-
             let pred = []
             pred = i == 0 ? this.getNPredecessors(loc, n, upToN, allLocalities) :
                 this.getNPredecessors(loc, n, upToN, allLocalities, false)
@@ -82,6 +79,11 @@ export class PredecessorsUnique implements PredecessorDelegation {
                 allPreds.set(p, true)
             }
             preds.set(loc, pred)
+
+            if (i % 50 == 0)
+                console.log(`INFO\tCalculated the ${n} predecessors from ${i+1} of ${localities.length} localities...`)
+            if (i == localities.length-1)
+                console.log(`INFO\tCalculated the ${n} predecessors from ${i+1} of ${localities.length} localities.`)
         }
 
         return preds

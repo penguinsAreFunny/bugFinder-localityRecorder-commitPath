@@ -52,9 +52,6 @@ export class PostdecessorsUnique implements PostdecessorsDelegation {
             // this locality is already inside a sequence
             if (allPosts.getVal(loc) != null) continue
 
-            if (i % 50 == 0 && i != 0)
-                console.log(`Calculated the ${n} postdecessors from ${i} of ${localities.length} localities...`)
-
             let post = []
             post = i == 0 ? this.getNPostdecessors(loc, n, upToN, allLocalities) :
                 this.getNPostdecessors(loc, n, upToN, allLocalities, false)
@@ -82,6 +79,11 @@ export class PostdecessorsUnique implements PostdecessorsDelegation {
                 allPosts.set(p, true)
             }
             posts.set(loc, post)
+
+            if (i % 50 == 0)
+                console.log(`INFO\tCalculated the ${n} postdecessors from ${i+1} of ${localities.length} localities...`)
+            if (i == localities.length-1)
+                console.log(`INFO\tCalculated the ${n} postdecessors from ${i+1} of ${localities.length} localities.`)
         }
 
         return posts
